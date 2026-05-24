@@ -1,4 +1,6 @@
 mkproj () {
+        local projects_dir="${MKPROJ_DIR:-$HOME/Documents/Github}"
+
         if [ -z "$1" ]; then #on verifie qu'un nom de projet a bien ete passer en parametre
                 echo -e "\033[1;31mErreur de syntaxe : le nom ne peut pas etre vide\033[0m"
                 echo "Usage : mkproj nom_du_projet [option]"
@@ -19,11 +21,16 @@ mkproj () {
                 echo "Syntaxe : mkproj nom_du_projet [options]"
                 echo ""
                 echo "Options :"
-                echo " -python          Cree un gitignore pour un projet python"
-                echo " -c               Cree des dossier src/ et header/ ainsi qu'un main.c"
-                echo " --help ou -h     Affiche ce message d'aide"
+                echo " --gitignore=<lang>   Recupere un .gitignore depuis GitHub pour le langage specifie"
+                echo "                     Exemple : --gitignore=Python, --gitignore=C, --gitignore=Node"
+                echo "                     Liste : gh api /gitignore/templates"
+                echo " -c                  Cree des dossiers src/ et header/ ainsi qu'un main.c"
+                echo " --help ou -h        Affiche ce message d'aide"
                 echo ""
-                echo "Exemple : mkproj mon-projet -python"
+                echo "Exemple : mkproj mon-projet --gitignore=Python"
+                echo ""
+                echo "Répertoire des projets : $projects_dir"
+                echo "(Modifiable via la variable d'environnement MKPROJ_DIR)"
                 return 0
         fi
 
@@ -33,14 +40,14 @@ mkproj () {
         options=("$@") #permet de recuperer toute les autres option dans un tableau
 
         #on verfie que le dossier n'existe pas déja
-        if [ -d ~/Documents/Github/"$project_name" ]; then
+        if [ -d "$projects_dir/$project_name" ]; then
                 read -p "Le dossier existe déjà. Voulez vous l'écraser ? (o/n) : " yn
                 [[ "$yn" != "o" ]] && return
         fi
 
-        mkdir -p ~/Documents/Github/"$project_name" #creation du dossier
-        echo -e "\033[1;34mCreation du dossier dans ~/Documents/Github/$project_name\033[0m"
-        cd ~/Documents/Github/"$project_name" || return #on essaye de rentrer dans le dossier et si pas possible on coupe la fonction
+        mkdir -p "$projects_dir/$project_name" #creation du dossier
+        echo -e "\033[1;34mCreation du dossier dans $projects_dir/$project_name\033[0m"
+        cd "$projects_dir/$project_name" || return #on essaye de rentrer dans le dossier et si pas possible on coupe la fonction
 
         git init
         git branch -M main
@@ -51,15 +58,17 @@ mkproj () {
 
         for opt in "${options[@]}"; do
                 case "$opt" in
-                        -python)
-                                cat > .gitignore <<EOF
-__pycache__/
-*.pyc
-venv/
-.env
-*.log
-EOF
-                                echo -e "\033[1;32m.gitignore python ajouté\033[0m"
+                        --gitignore=*)
+                                lang="${opt#--gitignore=}"
+                                echo -e "\033[1;34mRécupération du .gitignore pour '$lang' depuis GitHub...\033[0m"
+                                template=$(gh api /gitignore/templates/"$lang" --jq '.source' 2>/dev/null)
+                                if [ $? -ne 0 ] || [ -z "$template" ]; then
+                                        echo -e "\033[1;31mErreur : template '$lang' introuvable.\033[0m"
+                                        echo -e "Langues disponibles : $(gh api /gitignore/templates --jq '[.[]] | join(", ")' 2>/dev/null)"
+                                else
+                                        printf '%s\n' "$template" > .gitignore
+                                        echo -e "\033[1;32m.gitignore pour $lang ajouté\033[0m"
+                                fi
                                 ;;
                         -c)
                                 mkdir src header
@@ -81,4 +90,3 @@ EOF
 
         echo -e "\033[1;36mProjet $project_name intialisé et prêt 🚀\033[0m"
 }
-

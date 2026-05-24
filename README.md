@@ -17,14 +17,19 @@
 git clone https://github.com/Dymbor/mkproj.git
 ```
 
-2) Ajouter la fonction au shell
+2) Configuration minimale
 
 Ouvrez le fichier `~/.bashrc` avec un éditeur de texte : 
 
 ```bash
 nano ~/.bashrc
 ```
-Puis copiez-collez le contenu du fichier `mkproj.sh` à la fin du fichier.
+
+Ajoutez mkproj à votre fichier `~/.bashrc` (ou `~/.zshrc`) :
+
+```bash
+source "/chemin/vers/mkproj/mkproj.sh"
+```
 
 3) Rechargez votre configuration : 
 
@@ -32,35 +37,50 @@ Puis copiez-collez le contenu du fichier `mkproj.sh` à la fin du fichier.
 source ~/.bashrc
 ```
 
+## ⚙️ Configuration
+
+Le répertoire dans lequel les projets sont créés est contrôlé par la variable d'environnement `MKPROJ_DIR` (par défaut, si elle n'est pas définie, les projets seront créés dans `~/Documents/Github/`).
+
+Pour le modifier :
+
+```bash
+# Dans ~/.zshrc ou ~/.bashrc avant de sourcer mkproj.sh
+export MKPROJ_DIR="$HOME/mes-projets"
+```
+
 ## 🚀 Utilisation
 
 ```bash
-mkproj nom_du_projet [option]
+mkproj nom_du_projet [options]
 ```
 
-**Exemple :**
+**Exemples :**
 
 ```bash
-mkproj demo -python
+mkproj demo
+mkproj demo --gitignore=Python
+mkproj demo --gitignore=C -c
 ```
 
 ## 📁 Comportement
 
-Si aucune option n'est donnée, la commande : 
+Si aucune option n'est donnée, la commande :
 
-- Crée le répertoire `~/Documents/Github/nom_du_projet`
+- Crée le répertoire `$MKPROJ_DIR/nom_du_projet`
 - Initialise un dépôt Git
 - Crée un `README.md`
 - Effectue le commit initial
 - Crée un dépôt privé sur GitHub et push le projet
 
+## ⚙️ Options
 
-## ⚙️ Options 
+| Option | Description |
+|--------|-------------|
+| `--gitignore=<lang>` | Récupère un `.gitignore` depuis GitHub pour le langage donné (ex: `Python`, `C`,...) |
+| `-c` | Crée une arborescence pour un projet C (`src/`, `header/`, `main.c`) |
+| `-h`, `--help` | Affiche la documentation |
 
-- `-python` : ajoute un `.gitignore`pour Python
-- `-c` : crée une arboresence adapté à un projet en C (`src/`,`header/`,`main.c`)
-- `-h`,`--help` : affiche la documentation
-
+> Templates gitignore disponibles : `gh api /gitignore/templates`
 
 ## 💡 Améliorations possibles
 
